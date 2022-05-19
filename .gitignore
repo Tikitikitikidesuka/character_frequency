@@ -1,0 +1,12 @@
+# IntelliJ files
+.idea
+*.iml
+
+# Build directory
+/target
+
+# Cargo lock
+Cargo.lock
+
+# Test texts
+*.txt
