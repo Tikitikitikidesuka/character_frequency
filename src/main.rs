@@ -50,7 +50,7 @@ fn parallel_character_frequencies(text: &str, mut threads: usize) -> HashMap<cha
     let threads_with_more_data = text.len() % threads;
     let threads_with_less_data = threads - threads_with_more_data;
 
-    fn generate_thread(from: usize, chunk_size: usize, tx: &Sender<HashMap<char, usize>>, shared: &Arc<String>) {
+    fn generate_counting_thread(from: usize, chunk_size: usize, tx: &Sender<HashMap<char, usize>>, shared: &Arc<String>) {
         let tx = tx.clone();
         let shared = shared.clone();
         thread::spawn(move || {
@@ -65,19 +65,42 @@ fn parallel_character_frequencies(text: &str, mut threads: usize) -> HashMap<cha
 
     let mut from = 0;
     for _ in 0..threads_with_less_data {
-        generate_thread(from, chunk_size, &tx, &shared);
+        generate_counting_thread(from, chunk_size, &tx, &shared);
         from += chunk_size;
     }
     for _ in 0..threads_with_more_data {
-        generate_thread(from, chunk_size + 1, &tx, &shared);
+        generate_counting_thread(from, chunk_size + 1, &tx, &shared);
         from += chunk_size + 1;
     }
 
+    fn generate_adding_thread(a: HashMap<char, usize>, b: HashMap<char, usize>, tx: &Sender<HashMap<char, usize>>) {
+        let tx = tx.clone();
+        thread::spawn(move || {
+            let sum = add_frequencies(a, b);
+            tx.send(sum).unwrap();
+        });
+    }
+
+    let mut waiting_num: usize = threads;
+    let mut received = Vec::with_capacity(2);
+    while waiting_num > 0 {
+        received.push(rx.recv().unwrap());
+        waiting_num -= 1;
+
+        if received.len() >= 2 {
+            generate_adding_thread(received.pop().unwrap(), received.pop().unwrap(), &tx.clone());
+            waiting_num += 1;
+        }
+    }
+    received.pop().unwrap()
+
+    /*// NON MULTITHREADED ADDITION
     let mut out = rx.recv().unwrap();
     for _ in 0..threads-1 {
         out = add_frequencies(out, rx.recv().unwrap());
     }
     out
+    */
 }
 
 fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<char, usize> {
@@ -236,6 +259,19 @@ fn test_parallel_character_frequencies_single_thread() {
     assert_eq!(result, expected);
 }
 
+#[test]
+fn test_parallel_character_frequencies_prime_threads() {
+    let result = parallel_character_frequencies("aaaabbbccd|@", 7);
+    let mut expected: HashMap<char, usize> = HashMap::new();
+    expected.insert('a', 4);
+    expected.insert('b', 3);
+    expected.insert('c', 2);
+    expected.insert('d', 1);
+    expected.insert('|', 1);
+    expected.insert('@', 1);
+
+    assert_eq!(result, expected);
+}
 
 
 
