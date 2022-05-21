@@ -2,14 +2,6 @@
 
 A Rust library for counting character frequencies over multiple threads
 
-## Usage
-
-Add this to your `Cargo.toml`:
-```toml
-[dependencies]
-character_frequency = "0.1.0"
-```
-
 ## Functions
 
 - `character_frequencies(text: &str) -> HashMap<char, usize>`
