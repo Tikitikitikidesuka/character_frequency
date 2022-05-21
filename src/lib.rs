@@ -1,14 +1,73 @@
+//! # About
+//! Multithreaded character frequency counter.
+//!
+//! Counts the character frequencies in a text over multiple threads.
+//!
+
+
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, mpsc};
 use std::cmp::max;
 use std::thread;
 
+/// Counts the frequencies of chars from a string with as many threads as cpu's.
+///
+/// # Examples
+/// ```
+/// use character_frequency::*;
+/// use std::collections::HashMap;
+///
+/// let frequency_map = character_frequencies("Hello, World!");
+///
+/// println!("Character frequencies:");
+/// for (character, frequency) in frequency_map {
+///     println!("{}: {}", character, frequency);
+/// }
+///
+/// # let mut expected: HashMap<char, usize> = HashMap::new();
+/// # expected.insert('h', 1);
+/// # expected.insert('e', 1);
+/// # expected.insert('l', 3);
+/// # expected.insert('o', 2);
+/// # expected.insert('w', 1);
+/// # expected.insert('r', 1);
+/// # expected.insert('d', 1);
+/// # expected.insert('!', 1);
+/// # expected.insert(',', 1);
+/// # expected.insert(' ', 1);
+/// ```
 pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_with_n_threads(text, num_cpus::get())
 }
 
-pub fn character_frequencies_with_n_threads(text: &str, mut threads: usize) -> HashMap<char, usize> {
+/// Counts the frequencies of chars from a string with the ammount of threads specified.
+///
+/// # Examples
+/// ```
+/// use character_frequency::*;
+/// use std::collections::HashMap;
+///
+/// let frequency_map = character_frequencies_with_n_threads("Hello, World!", 8);
+///
+/// println!("Character frequencies:");
+/// for (character, frequency) in frequency_map {
+///     println!("{}: {}", character, frequency);
+/// }
+///
+/// # let mut expected: HashMap<char, usize> = HashMap::new();
+/// # expected.insert('h', 1);
+/// # expected.insert('e', 1);
+/// # expected.insert('l', 3);
+/// # expected.insert('o', 2);
+/// # expected.insert('w', 1);
+/// # expected.insert('r', 1);
+/// # expected.insert('d', 1);
+/// # expected.insert('!', 1);
+/// # expected.insert(',', 1);
+/// # expected.insert(' ', 1);
+/// ```
+pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashMap<char, usize> {
     if threads <= 1 {
         return sequential_character_frequencies(text);
     }
@@ -86,6 +145,8 @@ fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<
     out
 }
 
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
