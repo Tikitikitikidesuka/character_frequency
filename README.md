@@ -13,7 +13,6 @@ character_frequency = "0.1.0"
 ## Functions
 
 - `character_frequencies(text: &str) -> HashMap<char, usize>`
-
 Returns a map with the frequencies counted on the text parameter.
 It will run on as many threads as cpu's are available. 
 - `character_frequencies_with_n_threads(text: &str, threads: usize) -> HashMap<char, usize>`:
