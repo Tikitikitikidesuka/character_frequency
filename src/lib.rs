@@ -22,7 +22,7 @@ use std::thread;
 ///
 /// println!("Character frequencies:");
 /// for (character, frequency) in frequency_map {
-///     println!("{}: {}", character, frequency);
+///     println!("\'{}\': {}", character, frequency);
 /// }
 ///
 /// # let mut expected: HashMap<char, usize> = HashMap::new();
@@ -52,7 +52,7 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
 ///
 /// println!("Character frequencies:");
 /// for (character, frequency) in frequency_map {
-///     println!("{}: {}", character, frequency);
+///     println!("\'{}\': {}", character, frequency);
 /// }
 ///
 /// # let mut expected: HashMap<char, usize> = HashMap::new();
