@@ -1,6 +1,6 @@
 [package]
 name = "character_frequency"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "Simple library for counting character frequencies in a string concurrently"
 repository = "https://github.com/Tikitikitikidesuka/character_frequency"
