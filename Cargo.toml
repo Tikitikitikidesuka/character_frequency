@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Simple library for counting character frequencies in a string concurrently"
 repository = "https://github.com/Tikitikitikidesuka/character_frequency"
+license = "MIT"
 license-file = "LICENSE.md"
 
 keywords = [
