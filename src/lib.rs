@@ -4,10 +4,10 @@
 //! Counts the character frequencies in a text over multiple threads.
 //!
 
+use std::cmp::max;
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc};
-use std::cmp::max;
 use std::thread;
 
 /// Counts the frequencies of chars from a string with as many threads as cpu's.
