@@ -134,7 +134,7 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
     received.pop().unwrap()
 }
 
-fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
+pub fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_range(text, 0, text.len() - 1)
 }
 
