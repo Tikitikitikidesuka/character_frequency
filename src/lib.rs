@@ -4,10 +4,9 @@
 //! Counts the character frequencies in a text over multiple threads.
 //!
 
-
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
-use std::sync::{Arc, mpsc};
+use std::sync::{mpsc, Arc};
 use std::cmp::max;
 use std::thread;
 
@@ -80,15 +79,17 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
     let threads_with_more_data = text.len() % threads;
     let threads_with_less_data = threads - threads_with_more_data;
 
-    fn generate_counting_thread(from: usize, chunk_size: usize, tx: &Sender<HashMap<char, usize>>, shared: &Arc<String>) {
+    fn generate_counting_thread(
+        from: usize,
+        chunk_size: usize,
+        tx: &Sender<HashMap<char, usize>>,
+        shared: &Arc<String>,
+    ) {
         let tx = tx.clone();
         let shared = shared.clone();
         thread::spawn(move || {
-            let frequency_map = character_frequencies_range(
-                shared.as_str(),
-                from,
-                from + chunk_size - 1
-            );
+            let frequency_map =
+                character_frequencies_range(shared.as_str(), from, from + chunk_size - 1);
             tx.send(frequency_map).unwrap();
         });
     }
@@ -103,7 +104,11 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
         from += chunk_size + 1;
     }
 
-    fn generate_adding_thread(a: HashMap<char, usize>, b: HashMap<char, usize>, tx: &Sender<HashMap<char, usize>>) {
+    fn generate_adding_thread(
+        a: HashMap<char, usize>,
+        b: HashMap<char, usize>,
+        tx: &Sender<HashMap<char, usize>>,
+    ) {
         let tx = tx.clone();
         thread::spawn(move || {
             let sum = add_frequencies(a, b);
@@ -118,7 +123,11 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
         waiting_num -= 1;
 
         if received.len() >= 2 {
-            generate_adding_thread(received.pop().unwrap(), received.pop().unwrap(), &tx.clone());
+            generate_adding_thread(
+                received.pop().unwrap(),
+                received.pop().unwrap(),
+                &tx.clone(),
+            );
             waiting_num += 1;
         }
     }
@@ -132,7 +141,9 @@ fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
 fn character_frequencies_range(text: &str, from: usize, to: usize) -> HashMap<char, usize> {
     let mut frequency_map: HashMap<char, usize> = HashMap::new();
     for character in text.chars().skip(from).take(to - from + 1) {
-        *frequency_map.entry(character.to_ascii_lowercase()).or_insert(0) += 1;
+        *frequency_map
+            .entry(character.to_ascii_lowercase())
+            .or_insert(0) += 1;
     }
     frequency_map
 }
@@ -144,7 +155,6 @@ fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<
     }
     out
 }
-
 
 #[cfg(test)]
 mod tests {
