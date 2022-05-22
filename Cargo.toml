@@ -15,3 +15,10 @@ keywords = [
 
 [dependencies]
 num_cpus = "1.13.1"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmark"
+harness = false
