@@ -15,7 +15,6 @@ It will run on the specified ammount of threads.
 This example counts the character frequencies of `Hello, World!` and print them afterwards:
 ```rust
 use character_frequency::*;
-use std::collections::HashMap;
 
 let frequency_map = character_frequencies("Hello, World!");
 

@@ -16,7 +16,7 @@ use std::thread;
 /// # Examples
 /// ```
 /// use character_frequency::*;
-/// use std::collections::HashMap;
+/// # use std::collections::HashMap;
 ///
 /// let frequency_map = character_frequencies("Hello, World!");
 ///
@@ -46,7 +46,7 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
 /// # Examples
 /// ```
 /// use character_frequency::*;
-/// use std::collections::HashMap;
+/// # use std::collections::HashMap;
 ///
 /// let frequency_map = character_frequencies_with_n_threads("Hello, World!", 8);
 ///
