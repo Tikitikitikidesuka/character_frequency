@@ -10,6 +10,22 @@ use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc};
 use std::thread;
 
+#[derive(Clone,Copy)]
+pub enum Case {
+	Sensitive,
+	Insensitive
+}
+
+/// Counts the frequencies of chars from a string with as many threads as cpu's.
+///
+/// Identical to character_frequencies() but allows custom setting
+/// of Case::Sensitive or Case::Insensitive. 
+/// With Sensitive, a and A will be counted differently
+/// With Insensitive, a and A will be counted as the same character 
+pub fn character_frequencies_with_case(text: &str,case:Case) -> HashMap<char, usize> {
+    character_frequencies_with_n_threads_with_case(text, num_cpus::get(),case)
+}
+
 /// Counts the frequencies of chars from a string with as many threads as cpu's.
 ///
 /// # Examples
@@ -40,8 +56,9 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_with_n_threads(text, num_cpus::get())
 }
 
-/// Counts the frequencies of chars from a string with the ammount of threads specified.
-///
+/// Counts the frequencies of chars from a string with the ammount of threads specified. By default this is case insensitive
+/// By default this is Case-insensitive
+///	
 /// # Examples
 /// ```
 /// use character_frequency::*;
@@ -67,8 +84,18 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
 /// # expected.insert(' ', 1);
 /// ```
 pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashMap<char, usize> {
+	character_frequencies_with_n_threads_with_case(text, threads,Case::Insensitive)
+}
+
+/// Counts the frequencies of chars from a string with the ammount of threads specified.
+///
+/// Identical to character_frequencies_with_n_threads() but allows custom setting
+/// of Case::Sensitive or Case::Insensitive. 
+/// With Sensitive, a and A will be counted differently
+/// With Insensitive, a and A will be counted as the same character 
+pub fn character_frequencies_with_n_threads_with_case(text: &str, threads: usize,case:Case) -> HashMap<char, usize> {
     if threads <= 1 {
-        return sequential_character_frequencies(text);
+        return sequential_character_frequencies(text,case);
     }
 
     let (tx, rx) = mpsc::channel::<HashMap<char, usize>>();
@@ -84,23 +111,24 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
         chunk_size: usize,
         tx: &Sender<HashMap<char, usize>>,
         shared: &Arc<String>,
+		cases:Case
     ) {
         let tx = tx.clone();
         let shared = shared.clone();
         thread::spawn(move || {
             let frequency_map =
-                character_frequencies_range(shared.as_str(), from, from + chunk_size - 1);
+                character_frequencies_range(shared.as_str(), from, from + chunk_size - 1,cases);
             tx.send(frequency_map).unwrap();
         });
     }
 
     let mut from = 0;
     for _ in 0..threads_with_less_data {
-        generate_counting_thread(from, chunk_size, &tx, &shared);
+        generate_counting_thread(from, chunk_size, &tx, &shared,case);
         from += chunk_size;
     }
     for _ in 0..threads_with_more_data {
-        generate_counting_thread(from, chunk_size + 1, &tx, &shared);
+        generate_counting_thread(from, chunk_size + 1, &tx, &shared,case);
         from += chunk_size + 1;
     }
 
@@ -134,15 +162,19 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
     received.pop().unwrap()
 }
 
-pub fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
-    character_frequencies_range(text, 0, text.len() - 1)
+pub fn sequential_character_frequencies(text: &str,case:Case) -> HashMap<char, usize> {
+    character_frequencies_range(text, 0, text.len() - 1,case)
 }
 
-fn character_frequencies_range(text: &str, from: usize, to: usize) -> HashMap<char, usize> {
+fn character_frequencies_range(text: &str, from: usize, to: usize, case:Case) -> HashMap<char, usize> {
     let mut frequency_map: HashMap<char, usize> = HashMap::new();
     for character in text.chars().skip(from).take(to - from + 1) {
+		let c = match case {
+			Case::Insensitive => character.to_ascii_lowercase(),
+			_=> character,
+		};
         *frequency_map
-            .entry(character.to_ascii_lowercase())
+            .entry(c)
             .or_insert(0) += 1;
     }
     frequency_map
@@ -161,8 +193,40 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_unicode() {
+        let result = character_frequencies_range("维维尼熊aabbbccd|@", 0, 13,Case::Sensitive);
+        let mut expected: HashMap<char, usize> = HashMap::new();
+        expected.insert('b', 3);
+        expected.insert('维',2);
+        expected.insert('尼',1);
+        expected.insert('熊',1);
+        expected.insert('a', 2);
+        expected.insert('c', 2);
+        expected.insert('d', 1);
+        expected.insert('|', 1);
+        expected.insert('@', 1);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_character_frequencies_range_full_with_case() {
+        let result = character_frequencies_range("XXaabbbccd|@", 0, 11,Case::Sensitive);
+        let mut expected: HashMap<char, usize> = HashMap::new();
+        expected.insert('b', 3);
+        expected.insert('X', 2);
+        expected.insert('a', 2);
+        expected.insert('c', 2);
+        expected.insert('d', 1);
+        expected.insert('|', 1);
+        expected.insert('@', 1);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_character_frequencies_range_full() {
-        let result = character_frequencies_range("aaaabbbccd|@", 0, 11);
+        let result = character_frequencies_range("aaaabbbccd|@", 0, 11,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 4);
         expected.insert('b', 3);
@@ -176,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_consecutive_left() {
-        let result = character_frequencies_range("aaaa", 0, 2);
+        let result = character_frequencies_range("aaaa", 0, 2,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 3);
 
@@ -185,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_consecutive_right() {
-        let result = character_frequencies_range("aaaa", 1, 3);
+        let result = character_frequencies_range("aaaa", 1, 3,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 3);
 
@@ -194,7 +258,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_consecutive_center() {
-        let result = character_frequencies_range("aaaa", 1, 2);
+        let result = character_frequencies_range("aaaa", 1, 2,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 2);
 
@@ -203,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_consecutive_whole() {
-        let result = character_frequencies_range("aaaa", 0, 3);
+        let result = character_frequencies_range("aaaa", 0, 3,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 4);
 
@@ -212,7 +276,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_only_one_left() {
-        let result = character_frequencies_range("aaa", 0, 0);
+        let result = character_frequencies_range("aaa", 0, 0,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 1);
 
@@ -221,7 +285,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_only_one_right() {
-        let result = character_frequencies_range("aaa", 2, 2);
+        let result = character_frequencies_range("aaa", 2, 2,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 1);
 
@@ -230,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_character_frequencies_range_only_one_center() {
-        let result = character_frequencies_range("aaa", 1, 1);
+        let result = character_frequencies_range("aaa", 1, 1,Case::Sensitive);
         let mut expected: HashMap<char, usize> = HashMap::new();
         expected.insert('a', 1);
 
