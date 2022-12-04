@@ -10,6 +10,9 @@ It will run on as many threads as cpu's are available.
 - `character_frequencies_with_n_threads(text: &str, threads: usize) -> HashMap<char, usize>`:
 Returns a map with the frequencies counted on the text parameter.
 It will run on the specified ammount of threads.
+- `character_frequencies_with_case(text: &str,Case::Sensitive) -> HashMap<char, usize>`
+- `character_frequencies_with_n_threads_with_case(text: &str, threads: usize,Case::Sensitive) -> HashMap<char, usize>`:
+Identical to above but with case sensitivity turned on (so 'A' will be counted separate from 'a')
 
 ## Example
 This example counts the character frequencies of `Hello, World!` and print them afterwards:
