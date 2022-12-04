@@ -26,6 +26,6 @@ for (character, frequency) in frequency_map {
     println!("\'{}\': {}", character, frequency);
 }
 
-let frequency_map2 = character_frequencies("Hello, World!",Case::Sensitive);
+let frequency_map2 = character_frequencies_with_case("Hello, World!",Case::Sensitive);
 
 ```
