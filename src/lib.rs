@@ -10,15 +10,15 @@ use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc};
 use std::thread;
 
-/// This allows to count characters in a string while being sensitive to Case.
+/// CaseSense enables counting characters in a Case Sensitive way.
 /// * InsensitiveASCIIOnly - ignores case, but only for ASCII characters,
 /// 'A' and 'a' are counted as the same but Greek letter 'Σ' is
 /// counted as different from it's lowercase version 'σ' because it's not ASCII.
-/// Only ascii characters get converted to lowecase.
-/// For historical reasons, InsensitiveASCIIOnly is the default.
+/// Only ascii characters get converted to lowercase.
+/// InsensitiveASCIIOnly is the default.
 /// * Insensitive - ignores case based on Unicode Derived Core
 /// Property Lowercase, so 'A'=='a' and also 'Σ'=='σ'.
-/// Note this does not deal with situations where case depends on position
+/// This does not deal with situations where case depends on position
 /// in a word. It changes all UTF8 characters to lowercase one at a time.
 /// * Sensitive - Each character is counted separately.
 /// 'A' != 'a' and 'Σ'!='σ'. No characters are changed to lowercase.
@@ -60,6 +60,7 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_with_n_threads(text, num_cpus::get())
 }
 
+/// same as character_frequences() but with Case Sensitivity
 pub fn character_frequencies_w_case(text: &str, case: CaseSense) -> HashMap<char, usize> {
     character_frequencies_with_n_threads_w_case(text, num_cpus::get(), case)
 }
@@ -94,6 +95,7 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
     character_frequencies_with_n_threads_w_case(text, threads, CaseSense::InsensitiveASCIIOnly)
 }
 
+/// same as character_frequencies_with_n_threads(), with Case Sensitivity
 pub fn character_frequencies_with_n_threads_w_case(
     text: &str,
     threads: usize,
@@ -171,6 +173,7 @@ pub fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_range(text, 0, text.len() - 1, CaseSense::InsensitiveASCIIOnly)
 }
 
+// same as sequuential_character_frequencies but with Case Sensitivity
 pub fn sequential_character_frequencies_w_case(
     text: &str,
     case: CaseSense,
@@ -192,7 +195,7 @@ fn character_frequencies_range(
             CaseSense::Insensitive => match ch.to_lowercase().len() {
                 1 => ch.to_lowercase().next().unwrap(),
                 _ => panic!(
-                    "{:?} {} when converted to lowercase is a String not a character",
+                    "Unicode character {:?} {} when converted to lowercase is a String not a character",
                     ch, ch
                 ),
             },
