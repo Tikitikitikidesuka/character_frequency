@@ -160,164 +160,99 @@ fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<
 mod tests {
     use super::*;
 
+    // given "a4 b3 c2 d1 e1", return {a:4, b:3, c:2, d;1, e:1} hashmap
+    // convenience for testing
+    fn hashfreq(s: &str) -> HashMap<char, usize> {
+        let mut hm: HashMap<char, usize> = HashMap::new();
+        for i in s.split(" ") {
+            let ch = i.chars().next().unwrap();
+            let num = usize::from_str_radix(i.get(1..).unwrap(), 10).unwrap();
+            hm.insert(ch, num);
+        }
+        hm
+    }
+
     #[test]
     fn test_character_frequencies_range_full() {
         let result = character_frequencies_range("aaaabbbccd|@", 0, 11);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_left() {
         let result = character_frequencies_range("aaaa", 0, 2);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 3);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a3"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_right() {
         let result = character_frequencies_range("aaaa", 1, 3);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 3);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a3"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_center() {
         let result = character_frequencies_range("aaaa", 1, 2);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 2);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a2"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_whole() {
         let result = character_frequencies_range("aaaa", 0, 3);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4"));
     }
 
     #[test]
     fn test_character_frequencies_range_only_one_left() {
         let result = character_frequencies_range("aaa", 0, 0);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a1"));
     }
 
     #[test]
     fn test_character_frequencies_range_only_one_right() {
         let result = character_frequencies_range("aaa", 2, 2);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a1"));
     }
 
     #[test]
     fn test_character_frequencies_range_only_one_center() {
         let result = character_frequencies_range("aaa", 1, 1);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a1"));
     }
 
     #[test]
     fn test_sequential_character_frequencies() {
         let result = character_frequencies("aaaabbbccd|@");
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_parallel_character_frequencies_more_threads_than_characters() {
         let result = character_frequencies_with_n_threads("aaaabbbccd|@", 13);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_parallel_character_frequencies_less_threads_than_characters() {
         let result = character_frequencies_with_n_threads("aaaabbbccd|@", 5);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_parallel_character_frequencies_single_thread() {
         let result = character_frequencies_with_n_threads("aaaabbbccd|@", 1);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_parallel_character_frequencies_prime_threads() {
         let result = character_frequencies_with_n_threads("aaaabbbccd|@", 7);
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_parallel_character_frequencies_n_threads() {
         let result = character_frequencies("aaaabbbccd|@");
-        let mut expected: HashMap<char, usize> = HashMap::new();
-        expected.insert('a', 4);
-        expected.insert('b', 3);
-        expected.insert('c', 2);
-        expected.insert('d', 1);
-        expected.insert('|', 1);
-        expected.insert('@', 1);
-
-        assert_eq!(result, expected);
+        assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 }
