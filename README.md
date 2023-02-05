@@ -15,6 +15,8 @@ Same as character_frequencies() but with Case Sensitive counting
 - `character_frequencies_with_n_threads_w_case(text: &str,case:CaseSense) -> HashMap<char, usize>`
 Same as character_frequencies_with_n_threads() but with Case Sensitive counting
 
+### Enums
+
 - `CaseSense::InsensitiveASCIIOnly` - Converts ASCII characters to lowercase before counting
  This is the default.
 - `CaseSense::Insensitive` - Converts all UTF8 characters to lowercase before counting.  If
