@@ -33,7 +33,7 @@ let frequency_map = character_frequencies("Hello, World!");
 
 println!("Character frequencies:");
 for (character, frequency) in frequency_map {
-    print!("\'{}\': {}", character, frequency);
+    print!("\'{}\': {},", character, frequency);
 }
 //Character frequencies:
 //'r': 1 'd': 1 'o': 2 '!': 1 ',': 1 ' ': 1 'e': 1 'h': 1 'w': 1 'l': 3
@@ -46,7 +46,7 @@ let frequency_map = character_frequencies_w_case("Hello WORLD",CaseSense::Sensit
 
 println!("Character frequencies:");
 for (character, frequency) in frequency_map {
-    print!("\'{}\': {}", character, frequency);
+    print!("\'{}\': {},", character, frequency);
 }
 //Character frequencies:
 //'R': 1 'D': 1 'O': 1 'o': 1 ' ': 1 'e': 1 'H': 1 'W': 1 'l': 2 'L': 1
