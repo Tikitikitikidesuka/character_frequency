@@ -40,7 +40,7 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_with_n_threads(text, num_cpus::get())
 }
 
-/// Counts the frequencies of chars from a string with the ammount of threads specified.
+/// Counts the frequencies of chars from a string with the amount of threads specified.
 ///
 /// # Examples
 /// ```
@@ -160,8 +160,8 @@ fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<
 mod tests {
     use super::*;
 
-    // given "a4 b3 c2 d1 e1", return {a:4, b:3, c:2, d;1, e:1} hashmap
-    // convenience for testing
+    // convenience function for testing
+    // given "a4 b3 c2 d1 e1", return hashmap {a:4, b:3, c:2, d;1, e:1}
     fn hashfreq(s: &str) -> HashMap<char, usize> {
         let mut hm: HashMap<char, usize> = HashMap::new();
         for i in s.split(" ") {
@@ -194,6 +194,12 @@ mod tests {
     fn test_character_frequencies_range_consecutive_center() {
         let result = character_frequencies_range("aaaa", 1, 2);
         assert_eq!(result, hashfreq("a2"));
+        let result = character_frequencies_range("baab", 1, 2);
+        assert_eq!(result, hashfreq("a2"));
+        let result = character_frequencies_range("bacb", 1, 2);
+        assert_eq!(result, hashfreq("a1 c1"));
+        let result = character_frequencies_range("dcab", 1, 2);
+        assert_eq!(result, hashfreq("a1 c1"));
     }
 
     #[test]
