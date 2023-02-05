@@ -13,6 +13,7 @@ It will run on the specified ammount of threads.
 
 ## Example
 This example counts the character frequencies of `Hello, World!` and print them afterwards:
+
 ```rust
 use character_frequency::*;
 
@@ -22,4 +23,15 @@ println!("Character frequencies:");
 for (character, frequency) in frequency_map {
     println!("\'{}\': {}", character, frequency);
 }
+Character frequencies:
+'r': 1
+'d': 1
+'o': 2
+'!': 1
+',': 1
+' ': 1
+'e': 1
+'h': 1
+'w': 1
+'l': 3
 ```

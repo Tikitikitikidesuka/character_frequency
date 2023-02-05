@@ -163,13 +163,12 @@ mod tests {
     // convenience function for testing
     // given "a4 b3 c2 d1 e1", return hashmap {a:4, b:3, c:2, d;1, e:1}
     fn hashfreq(s: &str) -> HashMap<char, usize> {
-        let mut hm: HashMap<char, usize> = HashMap::new();
-        for i in s.split(" ") {
-            let ch = i.chars().next().unwrap();
-            let num = usize::from_str_radix(i.get(1..).unwrap(), 10).unwrap();
-            hm.insert(ch, num);
-        }
-        hm
+        HashMap::<char, usize>::from_iter(s.split(" ").map(|chunk| {
+            (
+                chunk.chars().next().unwrap(),
+                usize::from_str_radix(chunk.get(1..).unwrap(), 10).unwrap(),
+            )
+        }))
     }
 
     #[test]
