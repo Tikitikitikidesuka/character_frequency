@@ -37,8 +37,12 @@ for (character, frequency) in frequency_map {
 }
 //Character frequencies:
 //'r': 1 'd': 1 'o': 2 '!': 1 ',': 1 ' ': 1 'e': 1 'h': 1 'w': 1 'l': 3
+```
 
-let frequency_map = character_frequencies("Hello WORLD",CaseSense::Sensitive);
+This does the same but with case sensitivity.
+
+```rust
+let frequency_map = character_frequencies_w_case("Hello WORLD",CaseSense::Sensitive);
 
 println!("Character frequencies:");
 for (character, frequency) in frequency_map {
