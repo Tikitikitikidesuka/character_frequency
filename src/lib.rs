@@ -10,6 +10,28 @@ use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc};
 use std::thread;
 
+/// This allows to count characters in a string while being sensitive to Case.
+/// This is done by translating 0 or more of the characters in the input string
+/// to lowercase before doing the frequency count.
+/// * InsensitiveASCIIOnly - ignores case only for ASCII characters, 
+/// 'A' and 'a' are counted as the same but Greek letter 'Σ' is 
+/// counted as different from it's lowercase version 'σ' because it's not ASCII.
+/// Only ascii characters get converted to lowecase.
+/// For historical reasons, InsensitiveASCIIOnly is the default.
+/// * Insensitive - ignores case based on Unicode Derived Core 
+/// Property Lowercase, so 'A'=='a' and also 'Σ'=='σ'.
+/// Note this does not deal with situations where case depends on position
+/// in a word. It changes characters to lowercase one at a time. 
+/// * Sensitive - Each character is counted separately.
+/// 'A' != 'a' and 'Σ'!='σ'. No characters are changed to lowercase.
+/// see https://doc.rust-lang.org/std/string/struct.String.html#method.to_ascii_lowercase
+#[derive(Clone,Copy)]
+pub enum CaseSense {
+    Insensitive,
+    InsensitiveASCIIOnly,
+    Sensitive,
+}
+
 /// Counts the frequencies of chars from a string with as many threads as cpu's.
 ///
 /// # Examples
@@ -40,6 +62,11 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_with_n_threads(text, num_cpus::get())
 }
 
+pub fn character_frequencies_w_case(text: &str,case:CaseSense) -> HashMap<char, usize> {
+    character_frequencies_with_n_threads_w_case(text, num_cpus::get(),case)
+}
+
+
 /// Counts the frequencies of chars from a string with the amount of threads specified.
 ///
 /// # Examples
@@ -67,8 +94,12 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
 /// # expected.insert(' ', 1);
 /// ```
 pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashMap<char, usize> {
+	character_frequencies_with_n_threads_w_case(text, threads,CaseSense::InsensitiveASCIIOnly)
+}
+
+pub fn character_frequencies_with_n_threads_w_case(text: &str, threads: usize,case:CaseSense) -> HashMap<char, usize> {
     if threads <= 1 {
-        return sequential_character_frequencies(text);
+        return sequential_character_frequencies_w_case(text,case);
     }
 
     let (tx, rx) = mpsc::channel::<HashMap<char, usize>>();
@@ -84,23 +115,24 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
         chunk_size: usize,
         tx: &Sender<HashMap<char, usize>>,
         shared: &Arc<String>,
+		case: CaseSense
     ) {
         let tx = tx.clone();
         let shared = shared.clone();
         thread::spawn(move || {
             let frequency_map =
-                character_frequencies_range(shared.as_str(), from, from + chunk_size - 1);
+                character_frequencies_range(shared.as_str(), from, from + chunk_size - 1,case);
             tx.send(frequency_map).unwrap();
         });
     }
 
     let mut from = 0;
     for _ in 0..threads_with_less_data {
-        generate_counting_thread(from, chunk_size, &tx, &shared);
+        generate_counting_thread(from, chunk_size, &tx, &shared, case);
         from += chunk_size;
     }
     for _ in 0..threads_with_more_data {
-        generate_counting_thread(from, chunk_size + 1, &tx, &shared);
+        generate_counting_thread(from, chunk_size + 1, &tx, &shared, case);
         from += chunk_size + 1;
     }
 
@@ -132,20 +164,38 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
         }
     }
     received.pop().unwrap()
+
 }
 
 pub fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
-    character_frequencies_range(text, 0, text.len() - 1)
+    character_frequencies_range(text, 0, text.len() - 1,CaseSense::InsensitiveASCIIOnly)
 }
 
-fn character_frequencies_range(text: &str, from: usize, to: usize) -> HashMap<char, usize> {
-    let mut frequency_map: HashMap<char, usize> = HashMap::new();
-    for character in text.chars().skip(from).take(to - from + 1) {
-        *frequency_map
-            .entry(character.to_ascii_lowercase())
-            .or_insert(0) += 1;
-    }
-    frequency_map
+pub fn sequential_character_frequencies_w_case(text: &str,case:CaseSense) -> HashMap<char, usize> {
+    character_frequencies_range(text, 0, text.len() - 1,case)
+}
+
+fn character_frequencies_range(
+    text: &str,
+    from: usize,
+    to: usize, 
+    case_sense:CaseSense
+) -> HashMap<char, usize> {
+    text.chars()
+        .skip(from)
+        .take(to - from + 1)
+        .map(|ch| match case_sense {
+			CaseSense::InsensitiveASCIIOnly=>ch.to_ascii_lowercase(),
+			CaseSense::Insensitive=>match ch.to_lowercase().len() {
+				1=> ch.to_lowercase().next().unwrap(),
+				_=>panic!("{:?} {} when converted to lowercase is a String not a character",ch,ch)
+			}
+			CaseSense::Sensitive=>ch
+		})
+        .fold(HashMap::new(), |mut fmap, ch| {
+            *fmap.entry(ch).or_insert(0) += 1;
+            fmap
+        })
 }
 
 fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<char, usize> {
@@ -163,65 +213,65 @@ mod tests {
     // convenience function for testing
     // given "a4 b3 c2 d1 e1", return hashmap {a:4, b:3, c:2, d;1, e:1}
     fn hashfreq(s: &str) -> HashMap<char, usize> {
-        HashMap::<char, usize>::from_iter(s.split(" ").map(|chunk| {
+        HashMap::<char, usize>::from_iter(s.split(" ").map(|chunk|
             (
                 chunk.chars().next().unwrap(),
-                usize::from_str_radix(chunk.get(1..).unwrap(), 10).unwrap(),
+                usize::from_str_radix(&chunk.chars().skip(1).collect::<String>(), 10).unwrap()
             )
-        }))
+        ))
     }
 
     #[test]
     fn test_character_frequencies_range_full() {
-        let result = character_frequencies_range("aaaabbbccd|@", 0, 11);
+        let result = character_frequencies_range("aaaabbbccd|@", 0, 11,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_left() {
-        let result = character_frequencies_range("aaaa", 0, 2);
+        let result = character_frequencies_range("aaaa", 0, 2,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a3"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_right() {
-        let result = character_frequencies_range("aaaa", 1, 3);
+        let result = character_frequencies_range("aaaa", 1, 3,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a3"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_center() {
-        let result = character_frequencies_range("aaaa", 1, 2);
+        let result = character_frequencies_range("aaaa", 1, 2,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a2"));
-        let result = character_frequencies_range("baab", 1, 2);
+        let result = character_frequencies_range("baab", 1, 2,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a2"));
-        let result = character_frequencies_range("bacb", 1, 2);
+        let result = character_frequencies_range("bacb", 1, 2,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a1 c1"));
-        let result = character_frequencies_range("dcab", 1, 2);
+        let result = character_frequencies_range("dcab", 1, 2,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a1 c1"));
     }
 
     #[test]
     fn test_character_frequencies_range_consecutive_whole() {
-        let result = character_frequencies_range("aaaa", 0, 3);
+        let result = character_frequencies_range("aaaa", 0, 3,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a4"));
     }
 
     #[test]
     fn test_character_frequencies_range_only_one_left() {
-        let result = character_frequencies_range("aaa", 0, 0);
+        let result = character_frequencies_range("aaa", 0, 0,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a1"));
     }
 
     #[test]
     fn test_character_frequencies_range_only_one_right() {
-        let result = character_frequencies_range("aaa", 2, 2);
+        let result = character_frequencies_range("aaa", 2, 2,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a1"));
     }
 
     #[test]
     fn test_character_frequencies_range_only_one_center() {
-        let result = character_frequencies_range("aaa", 1, 1);
+        let result = character_frequencies_range("aaa", 1, 1,CaseSense::InsensitiveASCIIOnly);
         assert_eq!(result, hashfreq("a1"));
     }
 
@@ -260,4 +310,137 @@ mod tests {
         let result = character_frequencies("aaaabbbccd|@");
         assert_eq!(result, hashfreq("a4 b3 c2 d1 |1 @1"));
     }
+
+        #[test]
+        fn test_character_frequencies_range_full_w_case() {
+            let result = character_frequencies_range("AaaaBbBCCd|@", 0, 11,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a3 b1 C2 d1 |1 @1 A1 B2"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_consecutive_left_w_case() {
+            let result = character_frequencies_range("aaaA", 0, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a3"));
+            let result = character_frequencies_range("Aaaa", 0, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a2 A1"));
+            let result = character_frequencies_range("AaAa", 0, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a1 A2"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_consecutive_right_w_case() {
+            let result = character_frequencies_range("Aaaa", 1, 3,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a3"));
+            let result = character_frequencies_range("AaAa", 1, 3,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a2 A1"));
+            let result = character_frequencies_range("AaaA", 1, 3,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a2 A1"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_consecutive_center_w_case() {
+            let result = character_frequencies_range("aaaa", 1, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a2"));
+            let result = character_frequencies_range("baAb", 1, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a1 A1"));
+            let result = character_frequencies_range("bAcb", 1, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1 c1"));
+            let result = character_frequencies_range("dcab", 1, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a1 c1"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_consecutive_whole_w_case() {
+            let result = character_frequencies_range("aaaa", 0, 3,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a4"));
+            let result = character_frequencies_range("aAaa", 0, 3,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1 a3"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_only_one_left_w_case() {
+            let result = character_frequencies_range("aaa", 0, 0,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a1"));
+            let result = character_frequencies_range("AaA", 0, 0,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_only_one_right_w_case() {
+            let result = character_frequencies_range("aaa", 2, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a1"));
+            let result = character_frequencies_range("BaA", 2, 2,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1"));
+        }
+
+        #[test]
+        fn test_character_frequencies_range_only_one_center_w_case() {
+            let result = character_frequencies_range("aaa", 1, 1,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a1"));
+            let result = character_frequencies_range("aAa", 1, 1,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1"));
+        }
+
+        #[test]
+        fn test_sequential_character_frequencies_w_case() {
+            let result = character_frequencies_w_case("AaabbbccdEEE|@",CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1 a2 b3 c2 d1 |1 @1 E3"));
+        }
+
+        #[test]
+        fn test_parallel_character_frequencies_more_threads_than_characters_w_case() {
+            let result = character_frequencies_with_n_threads_w_case("AabbbccdE|@", 13,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1 a1 b3 c2 d1 |1 @1 E1"));
+        }
+
+        #[test]
+        fn test_parallel_character_frequencies_less_threads_than_characters_w_case() {
+            let result = character_frequencies_with_n_threads_w_case("AaaabbbccdEEE|@", 5,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("A1 a3 b3 c2 d1 |1 @1 E3"));
+        }
+
+        #[test]
+        fn test_parallel_character_frequencies_single_thread_w_case() {
+            let result = character_frequencies_with_n_threads_w_case("aaaAbbBccd|@", 1,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a3 b2 B1 A1 c2 d1 |1 @1"));
+        }
+
+        #[test]
+        fn test_parallel_character_frequencies_prime_threads_w_case() {
+            let result = character_frequencies_with_n_threads_w_case("AaaBbbCcd|@",7,CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a2 A1 B1 b2 c1 C1 d1 |1 @1"));
+        }
+
+        #[test]
+        fn test_parallel_character_frequencies_n_threads_w_case() {
+            let result = character_frequencies_w_case("AaaBbbCcd|@",CaseSense::Sensitive);
+            assert_eq!(result, hashfreq("a2 A1 B1 b2 c1 C1 d1 |1 @1"));
+        }
+
+        #[test]
+        fn test_character_frequencies_unicode() {
+			let greek_upper = "ὈΔΥΣΣΕΎΣ";
+			let greek_lower = "ὀδυσσεύς";
+			let greek_mix = "ὀδυσσεύςὈΔΥΣΣΕΎΣ";
+            let resultu = character_frequencies_w_case(greek_upper,CaseSense::Sensitive);
+            let resultl = character_frequencies_w_case(greek_lower,CaseSense::Sensitive);
+            let resultm = character_frequencies_w_case(greek_mix,CaseSense::Sensitive);
+            assert_eq!(resultu, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
+            assert_eq!(resultl, hashfreq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+            assert_eq!(resultm, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+            let resultu = character_frequencies_w_case(greek_upper,CaseSense::InsensitiveASCIIOnly);
+            let resultl = character_frequencies_w_case(greek_lower,CaseSense::InsensitiveASCIIOnly);
+            let resultm = character_frequencies_w_case(greek_mix,CaseSense::InsensitiveASCIIOnly);
+            assert_eq!(resultu, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
+            assert_eq!(resultl, hashfreq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+            assert_eq!(resultm, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+/*            let resultu = character_frequencies_w_case(greek_upper,CaseSense::Insensitive);
+            let resultl = character_frequencies_w_case(greek_lower,CaseSense::Insensitive);
+            let resultm = character_frequencies_w_case(greek_mix,CaseSense::Insensitive);
+            assert_eq!(resultu, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
+            assert_eq!(resultl, hashfreq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+            assert_eq!(resultm, hashfreq("ὀ2 δ2 υ2 σ5 ε2 ς2 ύ1"));*/
+			
+        }
+
 }
