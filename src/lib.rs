@@ -11,9 +11,7 @@ use std::sync::{mpsc, Arc};
 use std::thread;
 
 /// This allows to count characters in a string while being sensitive to Case.
-/// This is done by translating 0 or more of the characters in the input string
-/// to lowercase before doing the frequency count.
-/// * InsensitiveASCIIOnly - ignores case only for ASCII characters, 
+/// * InsensitiveASCIIOnly - ignores case, but only for ASCII characters, 
 /// 'A' and 'a' are counted as the same but Greek letter 'Σ' is 
 /// counted as different from it's lowercase version 'σ' because it's not ASCII.
 /// Only ascii characters get converted to lowecase.
@@ -21,7 +19,7 @@ use std::thread;
 /// * Insensitive - ignores case based on Unicode Derived Core 
 /// Property Lowercase, so 'A'=='a' and also 'Σ'=='σ'.
 /// Note this does not deal with situations where case depends on position
-/// in a word. It changes characters to lowercase one at a time. 
+/// in a word. It changes all UTF8 characters to lowercase one at a time. 
 /// * Sensitive - Each character is counted separately.
 /// 'A' != 'a' and 'Σ'!='σ'. No characters are changed to lowercase.
 /// see https://doc.rust-lang.org/std/string/struct.String.html#method.to_ascii_lowercase
@@ -434,12 +432,12 @@ mod tests {
             assert_eq!(resultu, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
             assert_eq!(resultl, hashfreq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
             assert_eq!(resultm, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
-/*            let resultu = character_frequencies_w_case(greek_upper,CaseSense::Insensitive);
+            let resultu = character_frequencies_w_case(greek_upper,CaseSense::Insensitive);
             let resultl = character_frequencies_w_case(greek_lower,CaseSense::Insensitive);
             let resultm = character_frequencies_w_case(greek_mix,CaseSense::Insensitive);
-            assert_eq!(resultu, hashfreq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
+            assert_eq!(resultu, hashfreq("ὀ1 δ1 υ1 σ3 ε1 ύ1"));
             assert_eq!(resultl, hashfreq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
-            assert_eq!(resultm, hashfreq("ὀ2 δ2 υ2 σ5 ε2 ς2 ύ1"));*/
+            assert_eq!(resultm, hashfreq("ὀ2 δ2 υ2 σ5 ε2 ς1 ύ2"));
 			
         }
 
