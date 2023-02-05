@@ -16,11 +16,11 @@ Same as character_frequencies() but with Case Sensitive counting
 Same as character_frequencies_with_n_threads() but with Case Sensitive counting
 
 CaseSense:
--InsensitiveASCIIOnly - Converts ASCII characters to lowercase before counting
+- `InsensitiveASCIIOnly - Converts ASCII characters to lowercase before counting
  This is the default.
--Insensitive - Converts all UTF8 characters to lowercase before counting.  If
+- `Insensitive - Converts all UTF8 characters to lowercase before counting.  If
  the character's lowercase version is a string not a character, it panics. 
--Sensitive - Doesn't convert any characters to lowercase before counting. 
+- `Sensitive - Doesn't convert any characters to lowercase before counting. 
 
 ## Example
 This example counts the character frequencies of `Hello, World!` and print them afterwards:
