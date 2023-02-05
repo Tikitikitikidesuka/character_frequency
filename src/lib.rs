@@ -14,12 +14,14 @@ use std::thread;
 /// * InsensitiveASCIIOnly - ignores case, but only for ASCII characters,
 /// 'A' and 'a' are counted as the same but Greek letter 'Σ' is
 /// counted as different from it's lowercase version 'σ' because it's not ASCII.
-/// Only ascii characters get converted to lowercase.
+/// All ascii characters get converted to lowercase before counting.
 /// InsensitiveASCIIOnly is the default.
 /// * Insensitive - ignores case based on Unicode Derived Core
 /// Property Lowercase, so 'A'=='a' and also 'Σ'=='σ'.
-/// This does not deal with situations where case depends on position
-/// in a word. It changes all UTF8 characters to lowercase one at a time.
+/// This does not deal with situations where case depends on position within
+/// a word. It changes all UTF8 characters to lowercase one at a time.
+/// Some UTF8 characters have a lowercase version that is a string, if that
+/// happens the code will panic!() if Insensitive is the CaseSense.
 /// * Sensitive - Each character is counted separately.
 /// 'A' != 'a' and 'Σ'!='σ'. No characters are changed to lowercase.
 /// see https://doc.rust-lang.org/std/string/struct.String.html#method.to_ascii_lowercase
