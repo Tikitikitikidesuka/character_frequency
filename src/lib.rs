@@ -430,38 +430,59 @@ mod tests {
     }
 
     #[test]
-    fn test_character_frequencies_unicode() {
+    fn test_unicode_case_sensitive() {
         let greek_upper = "ὈΔΥΣΣΕΎΣ";
         let greek_lower = "ὀδυσσεύς";
         let greek_mix = "ὀδυσσεύςὈΔΥΣΣΕΎΣ";
-        let resultu_s = character_frequencies_w_case(greek_upper, CaseSense::Sensitive);
-        let resultl_s = character_frequencies_w_case(greek_lower, CaseSense::Sensitive);
-        let resultm_s = character_frequencies_w_case(greek_mix, CaseSense::Sensitive);
-        assert_eq!(resultu_s, expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
-        assert_eq!(resultl_s, expected_freq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+        let resultu = character_frequencies_w_case(greek_upper, CaseSense::Sensitive);
+        let resultl = character_frequencies_w_case(greek_lower, CaseSense::Sensitive);
+        let resultm = character_frequencies_w_case(greek_mix, CaseSense::Sensitive);
+        assert_eq!(resultu, expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
+        assert_eq!(resultl, expected_freq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
         assert_eq!(
-            resultm_s,
+            resultm,
             expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1")
         );
-        let resultu_ia = character_frequencies_w_case(greek_upper, CaseSense::InsensitiveASCIIOnly);
-        let resultl_ia = character_frequencies_w_case(greek_lower, CaseSense::InsensitiveASCIIOnly);
-        let resultm_ia = character_frequencies_w_case(greek_mix, CaseSense::InsensitiveASCIIOnly);
-        assert_eq!(resultu_s, resultu_ia);
-        assert_eq!(resultl_s, resultl_ia);
-        assert_eq!(resultm_s, resultm_ia);
-        let resultu_i = character_frequencies_w_case(greek_upper, CaseSense::Insensitive);
-        let resultl_i = character_frequencies_w_case(greek_lower, CaseSense::Insensitive);
-        let resultm_i = character_frequencies_w_case(greek_mix, CaseSense::Insensitive);
-        assert_eq!(resultu_i, expected_freq("ὀ1 δ1 υ1 σ3 ε1 ύ1"));
-        assert_eq!(resultl_i, expected_freq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
-        assert_eq!(resultm_i, expected_freq("ὀ2 δ2 υ2 σ5 ε2 ς1 ύ2"));
+	}
+
+    #[test]
+    fn test_unicode_case_insensitiveasciionly() {
+        let greek_upper = "ὈΔΥΣΣΕΎΣ";
+        let greek_lower = "ὀδυσσεύς";
+        let greek_mix = "ὀδυσσεύςὈΔΥΣΣΕΎΣ";
+        let resultu = character_frequencies_w_case(greek_upper, CaseSense::InsensitiveASCIIOnly);
+        let resultl = character_frequencies_w_case(greek_lower, CaseSense::InsensitiveASCIIOnly);
+        let resultm = character_frequencies_w_case(greek_mix, CaseSense::InsensitiveASCIIOnly);
+        assert_eq!(resultu, expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1"));
+        assert_eq!(resultl, expected_freq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+        assert_eq!(
+            resultm,
+            expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1")
+        );
+	}
+
+    #[test]
+    fn test_unicode_case_insensitive() {
+        let greek_upper = "ὈΔΥΣΣΕΎΣ";
+        let greek_lower = "ὀδυσσεύς";
+        let greek_mix = "ὀδυσσεύςὈΔΥΣΣΕΎΣ";
+        let resultu = character_frequencies_w_case(greek_upper, CaseSense::Insensitive);
+        let resultl = character_frequencies_w_case(greek_lower, CaseSense::Insensitive);
+        let resultm = character_frequencies_w_case(greek_mix, CaseSense::Insensitive);
+        assert_eq!(resultu, expected_freq("ὀ1 δ1 υ1 σ3 ε1 ύ1"));
+        assert_eq!(resultl, expected_freq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
+        assert_eq!(resultm, expected_freq("ὀ2 δ2 υ2 σ5 ε2 ς1 ύ2"));
+	}
+
+    #[test]
+    fn test_unicode_case_irrelevant() {
         let chinese = "夫物芸芸，各復歸其根，歸根曰靜";
-        let expect_c = expected_freq("夫1 物1 芸2 ，2 各1 復1 其1 歸2 根2 曰1 靜1");
+        let expect = expected_freq("夫1 物1 芸2 ，2 各1 復1 其1 歸2 根2 曰1 靜1");
         let resultc_s = character_frequencies_w_case(chinese, CaseSense::Sensitive);
         let resultc_ia = character_frequencies_w_case(chinese, CaseSense::Insensitive);
         let resultc_i = character_frequencies_w_case(chinese, CaseSense::InsensitiveASCIIOnly);
-        assert_eq!(resultc_s, expect_c);
-        assert_eq!(resultc_ia, expect_c);
-        assert_eq!(resultc_i, expect_c);
+        assert_eq!(resultc_s, expect);
+        assert_eq!(resultc_ia, expect);
+        assert_eq!(resultc_i, expect);
     }
 }
