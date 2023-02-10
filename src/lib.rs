@@ -193,7 +193,7 @@ fn character_frequencies_range(
     for character in text.chars()
         .skip(from)
         .take(to - from + 1)
-		.map(|ch|  match case_sense {
+        .map(|ch|  match case_sense {
             CaseSense::Insensitive => match ch.to_lowercase().len() {
                 1 => ch.to_lowercase().next().unwrap(),
        	        _ => panic!("Unicode character {:?} {} when converted to lowercase is a multicharacter String not a character", ch, ch ),},
