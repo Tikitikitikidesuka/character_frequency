@@ -24,7 +24,7 @@ use std::thread;
 /// happens the code will panic!() if Insensitive is the CaseSense.
 /// * Sensitive - Each character is counted separately.
 /// 'A' != 'a' and 'Σ'!='σ'. No characters are changed to lowercase.
-/// see https://doc.rust-lang.org/std/string/struct.String.html#method.to_ascii_lowercase
+/// * See also <https://doc.rust-lang.org/std/string/struct.String.html#method.to_ascii_lowercase>
 #[derive(Clone, Copy)]
 pub enum CaseSense {
     Insensitive,
@@ -189,24 +189,20 @@ fn character_frequencies_range(
     to: usize,
     case_sense: CaseSense,
 ) -> HashMap<char, usize> {
-    text.chars()
+    let mut frequency_map: HashMap<char, usize> = HashMap::new();
+    for character in text.chars()
         .skip(from)
         .take(to - from + 1)
-        .map(|ch| match case_sense {
-            CaseSense::InsensitiveASCIIOnly => ch.to_ascii_lowercase(),
+		.map(|ch|  match case_sense {
             CaseSense::Insensitive => match ch.to_lowercase().len() {
                 1 => ch.to_lowercase().next().unwrap(),
-                _ => panic!(
-                    "Unicode character {:?} {} when converted to lowercase is a String not a character",
-                    ch, ch
-                ),
-            },
-            CaseSense::Sensitive => ch,
-        })
-        .fold(HashMap::new(), |mut fmap, ch| {
-            *fmap.entry(ch).or_insert(0) += 1;
-            fmap
-        })
+       	        _ => panic!("Unicode character {:?} {} when converted to lowercase is a multicharacter String not a character", ch, ch ),},
+            CaseSense::InsensitiveASCIIOnly => ch.to_ascii_lowercase(),
+            CaseSense::Sensitive=> ch,})
+        {
+            *frequency_map.entry(character).or_insert(0) += 1;
+        }
+    frequency_map
 }
 
 fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<char, usize> {
