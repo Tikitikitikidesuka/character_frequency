@@ -443,7 +443,7 @@ mod tests {
             resultm,
             expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1")
         );
-	}
+    }
 
     #[test]
     fn test_unicode_case_insensitiveasciionly() {
@@ -459,7 +459,7 @@ mod tests {
             resultm,
             expected_freq("Ὀ1 Δ1 Υ1 Σ3 Ε1 Ύ1 ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1")
         );
-	}
+    }
 
     #[test]
     fn test_unicode_case_insensitive() {
@@ -472,7 +472,7 @@ mod tests {
         assert_eq!(resultu, expected_freq("ὀ1 δ1 υ1 σ3 ε1 ύ1"));
         assert_eq!(resultl, expected_freq("ὀ1 δ1 υ1 σ2 ε1 ς1 ύ1"));
         assert_eq!(resultm, expected_freq("ὀ2 δ2 υ2 σ5 ε2 ς1 ύ2"));
-	}
+    }
 
     #[test]
     fn test_unicode_case_irrelevant() {
