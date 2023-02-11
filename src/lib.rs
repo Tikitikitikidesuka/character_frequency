@@ -62,7 +62,14 @@ pub fn character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_with_n_threads(text, num_cpus::get())
 }
 
-/// same as character_frequences() but with Case Sensitivity
+/// Same as character_frequences() but with Case Sensitivity
+///
+/// # Example
+/// ```
+/// use character_frequency::*;
+/// # use std::collections::HashMap;
+/// let frequency_map = character_frequencies_w_case("Hello, WORLD",CaseSense::Sensitive);
+/// ```
 pub fn character_frequencies_w_case(text: &str, case: CaseSense) -> HashMap<char, usize> {
     character_frequencies_with_n_threads_w_case(text, num_cpus::get(), case)
 }
@@ -98,6 +105,12 @@ pub fn character_frequencies_with_n_threads(text: &str, threads: usize) -> HashM
 }
 
 /// same as character_frequencies_with_n_threads(), with Case Sensitivity
+/// # Example
+/// ```
+/// use character_frequency::*;
+/// # use std::collections::HashMap;
+/// let frequency_map = character_frequencies_with_n_threads_w_case("Hello, WORLD",2,CaseSense::Sensitive);
+/// ```
 pub fn character_frequencies_with_n_threads_w_case(
     text: &str,
     threads: usize,
@@ -175,7 +188,13 @@ pub fn sequential_character_frequencies(text: &str) -> HashMap<char, usize> {
     character_frequencies_range(text, 0, text.len() - 1, CaseSense::InsensitiveASCIIOnly)
 }
 
-// same as sequuential_character_frequencies but with Case Sensitivity
+// Same as sequential_character_frequencies but with Case Sensitivity
+/// # Example
+/// ```
+/// use character_frequency::*;
+/// # use std::collections::HashMap;
+/// let frequency_map = sequential_character_frequencies_w_case("Hello, WORLD",CaseSense::Sensitive);
+/// ```
 pub fn sequential_character_frequencies_w_case(
     text: &str,
     case: CaseSense,
@@ -217,7 +236,7 @@ fn add_frequencies(a: HashMap<char, usize>, b: HashMap<char, usize>) -> HashMap<
 mod tests {
     use super::*;
 
-    // convenience function for testing
+    // convenience function for testing; simplifies giving expected frequencies.
     // given "a4 b3 c2 d1 e1", return hashmap {a:4, b:3, c:2, d;1, e:1}
     fn expected_freq(s: &str) -> HashMap<char, usize> {
         HashMap::<char, usize>::from_iter(s.split(" ").map(|chunk| {

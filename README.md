@@ -17,10 +17,9 @@ Same as character_frequencies_with_n_threads() but with Case Sensitive counting
 
 ### Enums
 
-- `CaseSense::InsensitiveASCIIOnly` - Converts ASCII characters to lowercase before counting
- This is the default.
-- `CaseSense::Insensitive` - Converts all UTF8 characters to lowercase before counting.  If
- the character's lowercase version is a string not a character, it panics. 
+- `CaseSense::InsensitiveASCIIOnly` - Converts ASCII characters to lowercase before counting. This is the default.
+- `CaseSense::Insensitive` - Converts all UTF8 characters to lowercase before counting.  If the Unicode
+character's lowercase version is a string, not a character, it panics. 
 - `CaseSense::Sensitive` - Doesn't convert any characters to lowercase before counting. 
 
 ## Example
