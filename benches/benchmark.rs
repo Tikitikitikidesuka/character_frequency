@@ -3,7 +3,8 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs;
 
 fn character_frequency_benchmark(c: &mut Criterion) {
-    let text = fs::read_to_string("benches/bench_text.txt").expect("File not found");
+	let filename = "benches/bench_text.txt";
+    let text = fs::read_to_string(filename).expect(&format!("File not found: {}",filename));
     c.bench_function("sequential", |b| {
         b.iter(|| sequential_character_frequencies(black_box(&text)))
     });
